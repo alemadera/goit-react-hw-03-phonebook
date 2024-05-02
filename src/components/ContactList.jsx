@@ -9,6 +9,10 @@ const ContactList = ({ contacts, filter, deleteContact }) => {
 
   const handleDelete = (id) => {
     deleteContact(id);
+
+    // Actualizar localStorage después de eliminar un contacto
+    const updatedContacts = contacts.filter(contact => contact.id !== id);
+    localStorage.setItem('contacts', JSON.stringify(updatedContacts));
   };
 
   return (
