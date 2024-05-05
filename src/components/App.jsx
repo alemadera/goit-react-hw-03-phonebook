@@ -1,42 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { Container } from './App.styled';
 import ContactForm from './ContactForm';
 import ContactList from './ContactList';
 import Filter from './Filter';
 
-const App = () => {
-  const storedContacts = localStorage.getItem('contacts');
-  console.log('storedContacts:', storedContacts);
-
-  let initialContacts = [];
-  try {
-    initialContacts = storedContacts ? JSON.parse(storedContacts) : [];
-  } catch (error) {
-    console.error('Error parsing stored contacts:', error);
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      contacts: [],
+      filter: ''
+    };
   }
 
-  const [contacts, setContacts] = useState(initialContacts);
-  const [filter, setFilter] = useState('');
+  componentDidMount() {
+    const storedContacts = localStorage.getItem('contacts');
+    if (storedContacts) {
+      this.setState({ contacts: JSON.parse(storedContacts) });
+    }
+  }
 
-  // Guardar los contactos en localStorage cada vez que cambien
-  useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.contacts !== this.state.contacts) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+    }
+  }
 
-  const deleteContact = (id) => {
-    setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
+  handleSetContacts = (newContacts) => {
+    this.setState({ contacts: newContacts });
+  };
+  
+  handleDeleteContact = (id) => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== id)
+    }));
   };
 
-  return (
-    <Container>
-      <h1>Agenda de Contactos</h1>
-      <ContactForm contacts={contacts} setContacts={setContacts} />
-      <h2>Contactos</h2>
-      <h3>Busca el contacto por nombre</h3>
-      <Filter filter={filter} setFilter={setFilter} />
-      <ContactList contacts={contacts} filter={filter} deleteContact={deleteContact} />
-    </Container>
-  );
-};
+  handleFilterChange = (event) => {
+    this.setState({ filter: event.target.value });
+  };
+
+  handleaddContact = (newContact) => {
+    this.setState(prevState => ({
+      contacts: [...prevState.contacts, newContact]
+    }));
+  };
+
+  render() {
+    const { contacts, filter } = this.state;
+    const filteredContacts = contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    return (
+      <Container>
+        <h1>Agenda de Contactos</h1>
+        <ContactForm contacts={this.state.contacts} setContacts={this.handleSetContacts} />
+        <h2>Contactos</h2>
+        <h3>Busca el contacto por nombre</h3>
+        <Filter filter={filter} handleChange={this.handleFilterChange} />
+        <ContactList contacts={filteredContacts} deleteContact={this.handleDeleteContact} />
+      </Container>
+    );
+  }
+}
 
 export default App;
